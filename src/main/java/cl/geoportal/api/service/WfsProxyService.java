@@ -7,6 +7,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class WfsProxyService {
@@ -16,12 +17,31 @@ public class WfsProxyService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // TODO: implementar fetch completo:
-    //   - construir URL WFS con workspace + typename + outputFormat=application/json
-    //   - aplicar filtro CQL si es necesario
-    //   - parsear GeoJSON response → List<Map<String, Object>>
-    //   - respetar limit
+    // GeoServer requiere URL workspace-específica: {baseUrl}/{workspace}/wfs
+    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> fetchLayer(String workspace, String typename, int limit) {
-        return List.of();
+        String endpoint = wfsBaseUrl + "/" + workspace + "/wfs";
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(endpoint)
+                .queryParam("service", "WFS")
+                .queryParam("version", "2.0.0")
+                .queryParam("request", "GetFeature")
+                .queryParam("typeNames", typename)
+                .queryParam("outputFormat", "application/json");
+
+        if (limit > 0) {
+            builder.queryParam("count", limit);
+        }
+
+        Map<String, Object> geojson = restTemplate.getForObject(builder.toUriString(), Map.class);
+        if (geojson == null) return List.of();
+
+        List<Map<String, Object>> features = (List<Map<String, Object>>) geojson.get("features");
+        if (features == null) return List.of();
+
+        return features.stream()
+                .map(f -> (Map<String, Object>) f.get("properties"))
+                .filter(Objects::nonNull)
+                .toList();
     }
 }

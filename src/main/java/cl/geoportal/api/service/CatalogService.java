@@ -101,10 +101,13 @@ public class CatalogService {
                 })
                 .toList();
 
+        // source: mapa completo para que LayerService extraiga workspace/typename/service_url/etc.
+        if (source == null) source = Map.of();
+
         // relations: lista tal cual del YAML, o vacía si no existe
         var relations = (List<Map<String, Object>>) raw.get("relations");
         if (relations == null) relations = List.of();
 
-        return new CatalogLayerDto(id, title, sourceType, featureCount, schemaStatus, columns, relations);
+        return new CatalogLayerDto(id, title, sourceType, featureCount, schemaStatus, source, columns, relations);
     }
 }
