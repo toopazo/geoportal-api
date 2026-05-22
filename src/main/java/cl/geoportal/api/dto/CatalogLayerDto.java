@@ -8,6 +8,7 @@ public record CatalogLayerDto(
         String title,
         String sourceType,
         int featureCount,
+        String schemaStatus,
         List<Map<String, Object>> columns,
         List<Map<String, Object>> relations
 ) {}
